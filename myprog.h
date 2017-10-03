@@ -60,5 +60,5 @@ void PerformMove(char board[8][8], char move[12], int mlen);
 // minVal and maxVal made obsolete by alphaBeta
 /*double minVal(char currBoard[8][8], double alpha, double beta, int depth);
 double maxVal(char currBoard[8][8], double alpha, double beta, int depth);*/
-double alphaBeta(char currBoard[8][8], int depth, double alpha, double beta)
+double alphaBeta(char currBoard[8][8], int depth, double alpha, double beta);
 #endif

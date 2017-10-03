@@ -30,8 +30,6 @@ int jumplist[48][12];
 int numLegalMoves = 0;
 int movelist[48][12];
 
-int me;
-
 /* Print the amount of time passed since my turn began */
 void PrintTime(void)
 {
@@ -277,11 +275,16 @@ void FindBestMove(int player)
     /* Find the legal moves for the current state */
     FindLegalMoves(&state);
 
+/*	Original heuristic; random move
     // For now, until you write your search routine, we will just set the best move
     // to be a random (legal) one, so that it plays a legal game of checkers.
     // You *will* want to replace this with a more intelligent move seleciton
     i = rand()%state.numLegalMoves;
     memcpy(bestmove,state.movelist[i],MoveLength(state.movelist[i]));
+*/
+	int depth = 5;	
+	for(i = depth; i >= 0; i--)
+		alphaBeta(state.board, i, -1000, 1000);
 }
 
 /* Converts a square label to it's x,y position */
@@ -443,7 +446,11 @@ double alphaBeta(char currBoard[8][8], int depth, double alpha, double beta)
 		if(rval >= beta)
 			return rval;
 		if(rval > alpha)
-			alpha = rval;
+		{
+			alpha = rval; 
+			// Tentative; we may want this in the other if-statement as well, or instead
+    			memcpy(bestmove, state.movelist[i], MoveLength(state.movelist[i]));
+		}
 	}
 
 	return alpha;

@@ -264,27 +264,46 @@ int FindLegalMoves(struct State *state)
 /* and the PerformMove function */
 void FindBestMove(int player)
 {
-    int i; 
-    struct State state; 
+	int i, bestMove; 
+	double bestScore;
+	struct State state; 
 
-    /* Set up the current state */
-    state.player = player;
-    memcpy(state.board,board,64*sizeof(char));
-    memset(bestmove,0,12*sizeof(char));
+	/* Set up the current state */
+	state.player = player;
+	memcpy(state.board,board,64*sizeof(char));
+	memset(bestmove,0,12*sizeof(char));
 
-    /* Find the legal moves for the current state */
-    FindLegalMoves(&state);
+	/* Find the legal moves for the current state */
+	FindLegalMoves(&state);
 
-/*	Original heuristic; random move
-    // For now, until you write your search routine, we will just set the best move
-    // to be a random (legal) one, so that it plays a legal game of checkers.
-    // You *will* want to replace this with a more intelligent move seleciton
-    i = rand()%state.numLegalMoves;
-    memcpy(bestmove,state.movelist[i],MoveLength(state.movelist[i]));
-*/
-	int depth = 5;	
-	for(i = depth; i >= 0; i--)
-		alphaBeta(state.board, i, -1000, 1000);
+	/*	Original heuristic; random move
+	// For now, until you write your search routine, we will just set the best move
+	// to be a random (legal) one, so that it plays a legal game of checkers.
+	// You *will* want to replace this with a more intelligent move seleciton
+	i = rand()%state.numLegalMoves;
+	memcpy(bestmove,state.movelist[i],MoveLength(state.movelist[i])); */
+		
+	bestMove = rand() % state.numLegalMoves;
+	bestScore = -0xFFFF;
+
+	int depth = 7;
+	for(i = 0; i < state.numLegalMoves; i++)
+	{
+		double rval;
+		char nextBoard[8][8];
+
+		memcpy(nextBoard, state.board, 64*sizeof(char));
+		PerformMove(nextBoard, state.movelist[i], MoveLength(state.movelist[i]));
+		rval = minVal(nextBoard, -0xFFFF, 0xFFFF, depth);
+
+		if(bestScore < rval)
+		{
+			bestScore = rval;
+			bestMove = i;
+		}
+	}
+
+	memcpy(bestmove, state.movelist[bestMove], MoveLength(state.movelist[bestMove]));
 }
 
 /* Converts a square label to it's x,y position */
@@ -422,61 +441,103 @@ double evalBoard(struct State *currBoard)
 	return yourScore;
 }
 
-double alphaBeta(char currBoard[8][8], int depth, double alpha, double beta)
+/*double alphaBeta(char currBoard[8][8], int depth, double alpha, double beta)
 {
+	int i;
 	struct State state;
-
-	state.player = (me == 1 ? 1 : 0);
 
 	memcpy(state.board, currBoard, 64*sizeof(char));
 
 	if(depth <= 0)
+	{
+		state.player = me;
 		return evalBoard(&state);
+	}
+
+	state.player = ((me == 1) ? 2 : 1);
 
 	FindLegalMoves(&state);
 
-	int i;
 	for(i = 0; i < state.numLegalMoves; i++)
 	{
 		char nextBoard[8][8];
-		memcpy(nextBoard, board, sizeof(nextBoard));
+		double rval;
+
+		memcpy(nextBoard, currBoard, sizeof(nextBoard));
 		PerformMove(nextBoard, state.movelist[i], MoveLength(state.movelist[i]));
 
-		double rval = -alphaBeta(nextBoard, depth - 1, -beta, -alpha);
+		rval = -alphaBeta(nextBoard, depth - 1, -beta, -alpha);
 		if(rval >= beta)
 			return rval;
 		if(rval > alpha)
-		{
 			alpha = rval; 
-			// Tentative; we may want this in the other if-statement as well, or instead
-    			memcpy(bestmove, state.movelist[i], MoveLength(state.movelist[i]));
-		}
 	}
 
 	return alpha;
-}
+}*/
 
-/*double maxVal(char currBoard[8][8], double alpha, double beta, int depth)
+double minVal(char currBoard[8][8], double alpha, double beta, int depth)
 {
+	int i;
 	struct State state;
-
-	state.player = (me == 1 ? 1 : 0);
 
 	memcpy(state.board, currBoard, 64*sizeof(char));
 
 	depth--;
 	if(depth <= 0)
+	{
+		state.player = me;
 		return evalBoard(&state);
+	}
+
+	state.player = ((me == 1) ? 2 : 1);
 
 	FindLegalMoves(&state);
 
+	for(i = 0; i < state.numLegalMoves; i++)
+	{
+		char nextBoard[8][8];
+		double max;
+	
+		memcpy(nextBoard, currBoard, sizeof(nextBoard));
+		PerformMove(nextBoard, state.movelist[i], MoveLength(state.movelist[i]));
+		
+		max = maxVal(nextBoard, alpha, beta, depth);
+		if(max < beta)
+			beta = max;
+		if(alpha >= beta)
+			return alpha;
+	}
+
+	return beta;
+}
+
+double maxVal(char currBoard[8][8], double alpha, double beta, int depth)
+{
 	int i;
+	struct State state;
+
+	memcpy(state.board, currBoard, 64*sizeof(char));
+
+	depth--;
+	if(depth <= 0)
+	{
+		state.player = me;
+		return evalBoard(&state);
+	}
+
+	state.player = me;
+
+	FindLegalMoves(&state);
+
 	for(i = 0; i < state.numLegalMoves; i++)
 	{
 		char nextBoard[8][8];
 		double min;
-		memcpy(nextBoard, board, sizeof(nextBoard));
+	
+		memcpy(nextBoard, currBoard, sizeof(nextBoard));
 		PerformMove(nextBoard, state.movelist[i], MoveLength(state.movelist[i]));
+		
 		min = minVal(nextBoard, alpha, beta, depth);
 		if(min > alpha)
 			alpha = min;
@@ -486,37 +547,6 @@ double alphaBeta(char currBoard[8][8], int depth, double alpha, double beta)
 
 	return alpha;
 }
-
-double minVal(char currBoard[8][8], double alpha, double beta, int depth)
-{
-	struct State state;
-
-	state.player = (me == 1 ? 1 : 0);
-
-	memcpy(state.board, currBoard, 64*sizeof(char));
-
-	depth--;
-	if(depth <= 0)
-		return evalBoard(&state);
-
-	FindLegalMoves(&state);
-
-	int i;
-	for(i = 0; i < state.numLegalMoves; i++)
-	{
-		char nextBoard[8][8];
-		double max;
-		memcpy(nextBoard, board, sizeof(nextBoard));
-		PerformMove(nextBoard, state.movelist[i], MoveLength(state.movelist[i]));
-		max = maxVal(nextBoard, alpha, beta, depth);
-		if(max < beta)
-			beta = max;
-		if(beta >= alpha)
-			return alpha;
-	}
-
-	return beta;
-}*/
 
 int main(int argc, char *argv[])
 {

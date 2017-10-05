@@ -37,6 +37,7 @@ struct State {
                   that the piece will visit (in order) during the course of a single move.  The 
                   last number in this sequence is the final position of the piece being moved.  */
     int numLegalMoves;
+    int alpha, beta, numRed, numWhite;
 };
 
 void CopyState(char *dest, char src);
@@ -57,8 +58,7 @@ int MoveLength(char move[12]);
 int TextToMove(char *mtext, char move[12]);
 void MoveToText(char move[12], char *mtext);
 void PerformMove(char board[8][8], char move[12], int mlen);
-// minVal and maxVal made obsolete by alphaBeta
-/*double minVal(char currBoard[8][8], double alpha, double beta, int depth);
-double maxVal(char currBoard[8][8], double alpha, double beta, int depth);*/
-double alphaBeta(char currBoard[8][8], int depth, double alpha, double beta);
+//double alphaBeta(char currBoard[8][8], int depth, double alpha, double beta);
+double minVal(char currBoard[8][8], double alpha, double beta, int depth);
+double maxVal(char currBoard[8][8], double alpha, double beta, int depth);
 #endif

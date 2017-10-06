@@ -80,6 +80,7 @@ void ResetBoard(void)
                         pos++;
                 } else board[y][x] = 0;
         }
+
     endgame = 0;
 }
 
@@ -286,7 +287,7 @@ void FindBestMove(int player)
 	bestMove = rand() % state.numLegalMoves;
 	bestScore = -0xFFFF;
 
-	int depth = 7;
+	int depth = ((MaxDepth == -1) ? 10 : MaxDepth);
 	for(i = 0; i < state.numLegalMoves; i++)
 	{
 		double rval;
@@ -408,27 +409,45 @@ double evalBoard(struct State *currBoard)
 {
 	double yourScore = 0.0;
 
-	int redScore, whiteScore;
+	double redScore, whiteScore;
 	redScore = whiteScore = 0;	
 
 	int i, j;
 	for(i = 0; i < 8; i++)
 	{
-		for(j = 0; j < 8; j++)
+		for(j = ((i % 2 == 0) ? 1 : 0) ; j < 8; j+=2)
 		{
 			if(king(currBoard->board[i][j]))
 			{
 				if(color(currBoard->board[i][j]) == 1)
-					redScore += 2;
+				{
+					redScore += 1.3;
+				}
 				else
-					whiteScore += 2;
+				{
+					whiteScore += 1.3;
+				}
 			}
 			else if(piece(currBoard->board[i][j]))
 			{
 				if(color(currBoard->board[i][j]) == 1)
-					redScore += 2;
+				{
+					redScore += 1;
+					
+					if((i == 3 && j == 4) || (i == 4 && j == 3))
+						redScore += 0.5;
+					else if((i == 2 && (j == 3 || j == 5)) || (i == 3 && j == 2) || (i == 4 && j == 5) || (i == 5 && (j == 2 || j == 4))) 
+						redScore += 0.3;
+				}
 				else
-					whiteScore += 2;
+				{ 
+					whiteScore += 1;
+
+					if((i == 3 && j == 4) || (i == 4 && j == 3))
+						whiteScore += 0.5;
+					else if((i == 2 && (j == 3 || j == 5)) || (i == 3 && j == 2) || (i == 4 && j == 5) || (i == 5 && (j == 2 || j == 4))) 
+						whiteScore += 0.3;
+				}
 			}
 		}
 	}	
@@ -484,7 +503,7 @@ double minVal(char currBoard[8][8], double alpha, double beta, int depth)
 	memcpy(state.board, currBoard, 64*sizeof(char));
 
 	depth--;
-	if(depth <= 0)
+	if(depth <= 0 || LowOnTime() == 1)
 	{
 		state.player = me;
 		return evalBoard(&state);
@@ -520,7 +539,7 @@ double maxVal(char currBoard[8][8], double alpha, double beta, int depth)
 	memcpy(state.board, currBoard, 64*sizeof(char));
 
 	depth--;
-	if(depth <= 0)
+	if(depth <= 0 || LowOnTime() == 1)
 	{
 		state.player = me;
 		return evalBoard(&state);

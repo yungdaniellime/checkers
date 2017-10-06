@@ -59,6 +59,7 @@ int TextToMove(char *mtext, char move[12]);
 void MoveToText(char move[12], char *mtext);
 void PerformMove(char board[8][8], char move[12], int mlen);
 //double alphaBeta(char currBoard[8][8], int depth, double alpha, double beta);
+void evalAdjacentSquares(struct State *currBoard, int i, int j);
 double minVal(char currBoard[8][8], double alpha, double beta, int depth);
 double maxVal(char currBoard[8][8], double alpha, double beta, int depth);
 #endif

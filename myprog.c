@@ -34,13 +34,15 @@ int movelist[48][12];
 int numRed = 12;
 int numWhite = 12;
 
+int endGameNetPieces = 11;
+
 /*** For evaluations ***/
 double redScore, whiteScore;
 int kingVal = 1.7;
 int pieceVal = 1.0;
 int centerRingOneVal = 0.5;
 int centerRingTwoVal = 0.3;
-int adjacentAllyVal = 0.5;
+int adjacentAllyVal = 0.3;
 int capturableEnemyVal = 0.5;
 
 /* Print the amount of time passed since my turn began */
@@ -289,13 +291,6 @@ void FindBestMove(int player)
 
 	/* Find the legal moves for the current state */
 	FindLegalMoves(&state);
-
-	/*	Original heuristic; random move
-	// For now, until you write your search routine, we will just set the best move
-	// to be a random (legal) one, so that it plays a legal game of checkers.
-	// You *will* want to replace this with a more intelligent move seleciton
-	i = rand()%state.numLegalMoves;
-	memcpy(bestmove,state.movelist[i],MoveLength(state.movelist[i])); */
 		
 	bestMove = rand() % state.numLegalMoves;
 	bestScore = -0xFFFF;
@@ -444,7 +439,7 @@ double evalBoard(struct State *currBoard)
 					whiteScore += kingVal;
 					currNumWhite++;
 				}
-				if(numRed + numWhite <= 11){
+				if(numRed + numWhite <= endGameNetPieces){
 					evalAdjacentSquares(currBoard, i, j);
 				}
 			}
@@ -454,7 +449,7 @@ double evalBoard(struct State *currBoard)
 				{
 					redScore += pieceVal;
 					currNumRed++;
-					if(numRed + numWhite >= 11)
+					if(numRed + numWhite >= endGameNetPieces)
 					{
 
 						if((i == 3 && (j == 4 || j == 2)) || (i == 4 && (j == 3 || j == 5)))
@@ -467,7 +462,7 @@ double evalBoard(struct State *currBoard)
 				{ 
 					whiteScore += pieceVal;
 					currNumWhite++;
-					if(numRed + numWhite >= 11)
+					if(numRed + numWhite >= endGameNetPieces)
 					{
 
 						if((i == 3 && (j == 4 || j == 2)) || (i == 4 && (j == 3 || j == 5)))
@@ -477,8 +472,8 @@ double evalBoard(struct State *currBoard)
 					}
 				}
 				
-				if(numRed + numWhite <= 11){
-				evalAdjacentSquares(currBoard, i, j);
+				if(numRed + numWhite <= endGameNetPieces){
+					evalAdjacentSquares(currBoard, i, j);
 				}				
 			}
 		}
@@ -488,9 +483,9 @@ double evalBoard(struct State *currBoard)
 	}	
 
 	if(me == 1)
-		yourScore = redScore - whiteScore;
+		yourScore = redScore/whiteScore;
 	else
-		yourScore = whiteScore - redScore;
+		yourScore = whiteScore/redScore;
 
 	return yourScore;
 }
@@ -546,14 +541,26 @@ void evalAdjacentSquares(struct State *currBoard, int i, int j)
 		}
 	}
 
-	if(i + 2 < 8)
+	if(j + 2 < 8)
 	{
-		if(piece(currBoard->board[i + 2][j]) || king(currBoard->board[i + 2][j]))
+		if(piece(currBoard->board[i][j + 2]) || king(currBoard->board[i][j + 2]))
 		{
-			if(color(currBoard->board[i + 2][j]) == 1)
-				whiteScore += capturableEnemyVal;
-			else
-				redScore += capturableEnemyVal;	
+			if(color(currBoard->board[i][j]) == 1)
+			{
+				if(color(currBoard->board[i][j + 2]) == 1)
+				{/*do nothing*/}
+				else
+					redScore += capturableEnemyVal;
+			}
+			else if(king(currBoard->board[i][j]))
+			{
+				if(color(currBoard->board[i][j] == 1))
+				{
+					whiteScore += capturableEnemyVal;
+				}
+				else
+				{/*do nothing*/}
+			}
 		}
 	}
 					
@@ -561,70 +568,81 @@ void evalAdjacentSquares(struct State *currBoard, int i, int j)
 	{
 		if(piece(currBoard->board[i - 2][j]) || king(currBoard->board[i - 2][j]))
 		{
-			if(color(currBoard->board[i - 2][j]) == 1)
-				whiteScore += capturableEnemyVal;
-			else
-				redScore += capturableEnemyVal;	
-		}	
+			if(color(currBoard->board[i][j]) == 1 )
+			{
+			 	if(king(currBoard->board[i][j]))
+				{
+					if(color(currBoard->board[i - 2][j] == 1))
+					{/*do nothing*/}
+					else
+					{
+						redScore += capturableEnemyVal;
+					}
+				
+				}
+			}
+			else 
+			{
+				if(color(currBoard->board[i - 2][j] == 1))
+				{
+					whiteScore += capturableEnemyVal;
+				}
+				else
+				{/*do nothing*/}
+			}
+		}
 	}
 
 	if(j + 2 < 8)
 	{
-		if(piece(currBoard->board[i][j + 2]) || king(currBoard->board[i + 2][j]))
-		{
-			if(color(currBoard->board[i + 2][j]) == 1)
-				whiteScore += capturableEnemyVal;
-			else
-				redScore += capturableEnemyVal;	
+		if(piece(currBoard->board[i][j + 2]) || king(currBoard->board[i][j + 2]))
+		{	
+			if(king(currBoard->board[i][j]))
+			{
+				if(color(currBoard->board[i][j]) == 1)
+				{
+					if(color(currBoard->board[i][j + 2]) == 1)
+					{/*do nothing*/}
+					else
+					{	
+						redScore += capturableEnemyVal;
+					}
+				}
+				else if(color(currBoard->board[i][j + 2]) == 1)
+				{
+					whiteScore += capturableEnemyVal;
+				}
+				else
+				{/*do nothing*/}
+			}
 		}
 	}
 					
 	else if(j - 2 > 0)
 	{
-		if(piece(currBoard->board[i - 2][j]) || king(currBoard->board[i - 2][j]))
-		{
-			if(color(currBoard->board[i - 2][j]) == 1)
-				whiteScore += capturableEnemyVal;
-			else
-				redScore += capturableEnemyVal;	
-		}	
+		if(piece(currBoard->board[i][j - 2]) || king(currBoard->board[i][j - 2]))
+		{	
+			if(king(currBoard->board[i][j]))
+			{
+				if(color(currBoard->board[i][j]) == 1)
+				{
+					if(color(currBoard->board[i][j - 2]) == 1)
+					{/*do nothing*/}
+					else
+					{	
+						redScore += capturableEnemyVal;
+					}
+				}
+				else if(color(currBoard->board[i][j - 2]) == 1)
+				{
+					whiteScore += capturableEnemyVal;
+				}
+				else
+				{/*do nothing*/}
+			}
+		}
 	}
 }
-
-/*double alphaBeta(char currBoard[8][8], int depth, double alpha, double beta)
-{
-	int i;
-	struct State state;
-
-	memcpy(state.board, currBoard, 64*sizeof(char));
-
-	if(depth <= 0)
-	{
-		state.player = me;
-		return evalBoard(&state);
-	}
-
-	state.player = ((me == 1) ? 2 : 1);
-
-	FindLegalMoves(&state);
-
-	for(i = 0; i < state.numLegalMoves; i++)
-	{
-		char nextBoard[8][8];
-		double rval;
-
-		memcpy(nextBoard, currBoard, sizeof(nextBoard));
-		PerformMove(nextBoard, state.movelist[i], MoveLength(state.movelist[i]));
-
-		rval = -alphaBeta(nextBoard, depth - 1, -beta, -alpha);
-		if(rval >= beta)
-			return rval;
-		if(rval > alpha)
-			alpha = rval; 
-	}
-
-	return alpha;
-}*/
 
 double minVal(char currBoard[8][8], double alpha, double beta, int depth)
 {

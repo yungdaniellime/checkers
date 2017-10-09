@@ -18,6 +18,8 @@ int me,cutoff,endgame;
 long NumNodes;
 int MaxDepth;
 
+int turnCounter = 0;
+
 /*** For timing ***/
 clock_t start;
 struct tms bff;
@@ -287,24 +289,67 @@ void FindBestMove(int player)
 	bestMove = rand() % state.numLegalMoves;
 	bestScore = -0xFFFF;
 
-	int depth = ((MaxDepth == -1) ? 10 : MaxDepth);
-	for(i = 0; i < state.numLegalMoves; i++)
+	if(turnCounter == 0)
 	{
-		double rval;
-		char nextBoard[8][8];
-
-		memcpy(nextBoard, state.board, 64*sizeof(char));
-		PerformMove(nextBoard, state.movelist[i], MoveLength(state.movelist[i]));
-		rval = minVal(nextBoard, -0xFFFF, 0xFFFF, depth);
-
-		if(bestScore < rval)
+		if(state.player == 1)
 		{
-			bestScore = rval;
-			bestMove = i;
+			bestMove = 4;
+		}
+		else
+		{
+			if(piece(state.board[3][0]))
+			{
+				bestMove = 2;
+			}
+			else if(piece(state.board[3][2]) && piece(state.board[2][3]))
+			{
+				bestMove = 2;
+			}
+			else if(piece(state.board[3][4]) && piece(state.board[2][5]))
+			{
+				bestMove = 0;
+			}
+			else if(piece(state.board[3][2]) && piece(state.board[2][1]))
+			{
+				bestMove = 5;
+			}
+			else if(piece(state.board[3][6]) && piece(state.board[2][5]))
+			{
+				bestMove = 6;
+			}
+			else if(piece(state.board[3][4]) && piece(state.board[2][3]))
+			{
+				bestMove = 1;
+			}
+			else if(piece(state.board[3][6]) && piece(state.board[2][7]))
+			{
+				bestMove = 3;
+			}
+		}
+	}
+	
+	if(turnCounter != 0)
+	{
+		int depth = ((MaxDepth == -1) ? 10 : MaxDepth);
+		for(i = 0; i < state.numLegalMoves; i++)
+		{
+			double rval;
+			char nextBoard[8][8];
+
+			memcpy(nextBoard, state.board, 64*sizeof(char));
+			PerformMove(nextBoard, state.movelist[i], MoveLength(state.movelist[i]));
+			rval = minVal(nextBoard, -0xFFFF, 0xFFFF, depth);
+
+			if(bestScore < rval)
+			{
+				bestScore = rval;
+				bestMove = i;
+			}
 		}
 	}
 
 	memcpy(bestmove, state.movelist[bestMove], MoveLength(state.movelist[bestMove]));
+	turnCounter++;
 }
 
 /* Converts a square label to it's x,y position */

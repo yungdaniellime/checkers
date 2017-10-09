@@ -31,8 +31,8 @@ int numLegalMoves = 0;
 int movelist[48][12];
 
 /*** Piece-counts ***/
-int numRed;
-int numWhite;
+int numRed = 12;
+int numWhite = 12;
 
 /*** For evaluations ***/
 double redScore, whiteScore;
@@ -40,8 +40,8 @@ int kingVal = 1.7;
 int pieceVal = 1.0;
 int centerRingOneVal = 0.5;
 int centerRingTwoVal = 0.3;
-int adjacentAllyVal = 0.1;
-int capturableEnemyVal = 0.2;
+int adjacentAllyVal = 0.5;
+int capturableEnemyVal = 0.5;
 
 /* Print the amount of time passed since my turn began */
 void PrintTime(void)
@@ -444,8 +444,9 @@ double evalBoard(struct State *currBoard)
 					whiteScore += kingVal;
 					currNumWhite++;
 				}
-
-				evalAdjacentSquares(currBoard, i, j);
+				if(numRed + numWhite <= 11){
+					evalAdjacentSquares(currBoard, i, j);
+				}
 			}
 			else if(piece(currBoard->board[i][j]))
 			{
@@ -453,24 +454,32 @@ double evalBoard(struct State *currBoard)
 				{
 					redScore += pieceVal;
 					currNumRed++;
-					
-					if((i == 3 && (j == 4 || j == 2)) || (i == 4 && (j == 3 || j == 5)))
-						redScore += centerRingOneVal;
-					else if((i == 2 && (j == 3 || j == 5)) || (i == 3 && j == 2) || (i == 4 && j == 5) || (i == 5 && (j == 2 || j == 4))) 
-						redScore += centerRingTwoVal;
+					if(numRed + numWhite >= 11)
+					{
+
+						if((i == 3 && (j == 4 || j == 2)) || (i == 4 && (j == 3 || j == 5)))
+							redScore += centerRingOneVal;
+						else if((i == 2 && (j == 3 || j == 5)) || (i == 3 && j == 2) || (i == 4 && j == 5) || (i == 5 && (j == 2 || j == 4))) 
+							redScore += centerRingTwoVal;
+					}
 				}
 				else
 				{ 
 					whiteScore += pieceVal;
 					currNumWhite++;
+					if(numRed + numWhite >= 11)
+					{
 
-					if((i == 3 && (j == 4 || j == 2)) || (i == 4 && (j == 3 || j == 5)))
-						whiteScore += centerRingOneVal;
-					else if((i == 2 && (j == 3 || j == 5)) || (i == 3 && j == 2) || (i == 4 && j == 5) || (i == 5 && (j == 2 || j == 4))) 
-						whiteScore += centerRingTwoVal;
+						if((i == 3 && (j == 4 || j == 2)) || (i == 4 && (j == 3 || j == 5)))
+							whiteScore += centerRingOneVal;
+						else if((i == 2 && (j == 3 || j == 5)) || (i == 3 && j == 2) || (i == 4 && j == 5) || (i == 5 && (j == 2 || j == 4))) 
+							whiteScore += centerRingTwoVal;
+					}
 				}
-
-				evalAdjacentSquares(currBoard, i, j);				
+				
+				if(numRed + numWhite <= 11){
+				evalAdjacentSquares(currBoard, i, j);
+				}				
 			}
 		}
 
@@ -500,7 +509,7 @@ void evalAdjacentSquares(struct State *currBoard, int i, int j)
 					whiteScore += adjacentAllyVal;			
 			}
 		}
-		if(j - 1 > 0)
+		else if(j - 1 > 0)
 		{
 			if(piece(currBoard->board[i + 1][j - 1]) || king(currBoard->board[i + 1][j - 1]))
 			{
@@ -512,7 +521,7 @@ void evalAdjacentSquares(struct State *currBoard, int i, int j)
 		}
 	}
 					
-	if(i - 1 > 0)
+	else if(i - 1 > 0)
 	{
 		if(j + 1 < 8)
 		{
@@ -525,7 +534,7 @@ void evalAdjacentSquares(struct State *currBoard, int i, int j)
 			}	
 		}
 		
-		if(j - 1 > 0)
+		else if(j - 1 > 0)
 		{
 			if(piece(currBoard->board[i - 1][j - 1]) || king(currBoard->board[i - 1][j - 1]))
 			{
@@ -537,7 +546,7 @@ void evalAdjacentSquares(struct State *currBoard, int i, int j)
 		}
 	}
 
-/*	if(i + 2 < 8)
+	if(i + 2 < 8)
 	{
 		if(piece(currBoard->board[i + 2][j]) || king(currBoard->board[i + 2][j]))
 		{
@@ -548,7 +557,7 @@ void evalAdjacentSquares(struct State *currBoard, int i, int j)
 		}
 	}
 					
-	if(i - 2 > 0)
+	else if(i - 2 > 0)
 	{
 		if(piece(currBoard->board[i - 2][j]) || king(currBoard->board[i - 2][j]))
 		{
@@ -570,7 +579,7 @@ void evalAdjacentSquares(struct State *currBoard, int i, int j)
 		}
 	}
 					
-	if(j - 2 > 0)
+	else if(j - 2 > 0)
 	{
 		if(piece(currBoard->board[i - 2][j]) || king(currBoard->board[i - 2][j]))
 		{
@@ -579,7 +588,7 @@ void evalAdjacentSquares(struct State *currBoard, int i, int j)
 			else
 				redScore += capturableEnemyVal;	
 		}	
-	}*/
+	}
 }
 
 /*double alphaBeta(char currBoard[8][8], int depth, double alpha, double beta)

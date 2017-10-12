@@ -521,7 +521,8 @@ double evalBoard(struct State *currBoard)
 				}
 			}
 		}
-	}	
+	}
+	
 
 	if(me == 1)
 		yourScore = redScore - whiteScore;

@@ -51,7 +51,7 @@ int LowOnTime(void)
 
     current = times(&bff);
     total = (float) ((float)current-(float)start)/CLK_TCK;
-    if(total >= (SecPerMove-0.75)) return 1; else return 0;
+    if(total >= (SecPerMove-1.1)) return 1; else return 0;
 }
 
 /* Copy a square state */
@@ -452,6 +452,11 @@ double kingVal = 1.7;
 double pieceVal = 1.0;
 double centerRingOneVal = 0.5;
 double centerRingTwoVal = 0.3;
+int adjacentAllyVal = 0.3;
+int capturableEnemyVal = 0.5;
+int startRed = 12;
+int startWhite = 12;
+
 
 /**
  * Simple material advantage board evaluator
@@ -464,35 +469,46 @@ double evalBoard(struct State *currBoard)
 
 	int numRed = 0;
 	int numWhite = 0;
+	
 
 	int i, j;
 	for(i = 0; i < 8; i++)
 	{
 		for(j = ((i % 2 == 0) ? 1 : 0) ; j < 8; j+=2)
 		{
+			
+			
 			if(king(currBoard->board[i][j]))
 			{
 				if(color(currBoard->board[i][j]) == 1)
 				{
 					redScore += kingVal;
-
-					if((i == 3 && (j == 4 || j == 2)) || (i == 4 && (j == 3 || j == 5)))
-						redScore += centerRingOneVal;
-					else if((i == 2 && (j == 3 || j == 5)) || (i == 3 && j == 2) || (i == 4 && j == 5) || (i == 5 && (j == 2 || j == 4))) 
-						redScore += centerRingTwoVal;
-
+					
+					if(startRed+startWhite >= 8) {
+						if((i == 3 && (j == 4 || j == 2)) || (i == 4 && (j == 3 || j == 5)))
+							redScore += centerRingOneVal;
+						else if((i == 2 && (j == 3 || j == 5)) || (i == 3 && j == 2) || (i == 4 && j == 5) || (i == 5 && (j == 2 || j == 4))) 
+							redScore += centerRingTwoVal;
+					}
 					numRed++;
 				}
 				else
 				{
-					whiteScore += kingVal;
+					whiteScore += kingVal;	
 
-					if((i == 3 && (j == 4 || j == 2)) || (i == 4 && (j == 3 || j == 5)))
-						whiteScore += centerRingOneVal;
-					else if((i == 2 && (j == 3 || j == 5)) || (i == 3 && j == 2) || (i == 4 && j == 5) || (i == 5 && (j == 2 || j == 4))) 
-						whiteScore += centerRingTwoVal;
+					if(startRed+startWhite >= 8) {
+
+						if((i == 3 && (j == 4 || j == 2)) || (i == 4 && (j == 3 || j == 5)))
+							whiteScore += centerRingOneVal;
+						else if((i == 2 && (j == 3 || j == 5)) || (i == 3 && j == 2) || (i == 4 && j == 5) || (i == 5 && (j == 2 || j == 4))) 
+							whiteScore += centerRingTwoVal;
+					}
 
 					numWhite++;
+				}
+
+				if(startRed + startWhite <= 11){
+					evalAdjacentSquares(currBoard, i, j);
 				}
 			}
 			else if(piece(currBoard->board[i][j]))
@@ -501,26 +517,36 @@ double evalBoard(struct State *currBoard)
 				{
 					redScore += pieceVal;
 					
-					if((i == 3 && (j == 4 || j == 2)) || (i == 4 && (j == 3 || j == 5)))
-						redScore += centerRingOneVal;
-					else if((i == 2 && (j == 3 || j == 5)) || (i == 3 && j == 2) || (i == 4 && j == 5) || (i == 5 && (j == 2 || j == 4))) 
-						redScore += centerRingTwoVal;
+					if(startRed+startWhite >= 8) {
+
+						if((i == 3 && (j == 4 || j == 2)) || (i == 4 && (j == 3 || j == 5)))
+							redScore += centerRingOneVal;
+						else if((i == 2 && (j == 3 || j == 5)) || (i == 3 && j == 2) || (i == 4 && j == 5) || (i == 5 && (j == 2 || j == 4))) 
+							redScore += centerRingTwoVal;
+					}
 
 					numRed++;
 				}
 				else
 				{ 
 					whiteScore += pieceVal;
+				
+					if(startRed+startWhite >= 8) {
 
-					if((i == 3 && (j == 4 || j == 2)) || (i == 4 && (j == 3 || j == 5)))
-						whiteScore += centerRingOneVal;
-					else if((i == 2 && (j == 3 || j == 5)) || (i == 3 && j == 2) || (i == 4 && j == 5) || (i == 5 && (j == 2 || j == 4))) 
-						whiteScore += centerRingTwoVal;
-
+						if((i == 3 && (j == 4 || j == 2)) || (i == 4 && (j == 3 || j == 5)))
+							whiteScore += centerRingOneVal;
+						else if((i == 2 && (j == 3 || j == 5)) || (i == 3 && j == 2) || (i == 4 && j == 5) || (i == 5 && (j == 2 || j == 4))) 
+							whiteScore += centerRingTwoVal;
+					}
 					numWhite++;
 				}
+				if(startRed + startWhite <= 11){
+					evalAdjacentSquares(currBoard, i, j);
+				}	
 			}
 		}
+		startRed = numRed;
+		startWhite = numWhite;
 	}
 	
 
@@ -530,6 +556,161 @@ double evalBoard(struct State *currBoard)
 		yourScore = whiteScore - redScore;
 
 	return yourScore;
+}
+
+
+void evalAdjacentSquares(struct State *currBoard, int i, int j)
+{
+	if(i + 1 < 8)
+	{
+		if(j + 1 < 8)
+		{
+			if(piece(currBoard->board[i + 1][j + 1]) || king(currBoard->board[i + 1][j + 1]))
+			{
+				if(color(currBoard->board[i][j] == color(currBoard->board[i + 1][j + 1]) && currBoard->board[i][j] == 1))
+					redScore += adjacentAllyVal;
+				else if(color(currBoard->board[i][j] == color(currBoard->board[i + 1][j + 1])))
+					whiteScore += adjacentAllyVal;			
+			}
+		}
+		else if(j - 1 > 0)
+		{
+			if(piece(currBoard->board[i + 1][j - 1]) || king(currBoard->board[i + 1][j - 1]))
+			{
+				if(color(currBoard->board[i][j] == color(currBoard->board[i + 1][j - 1]) && currBoard->board[i][j] == 1))
+					redScore += adjacentAllyVal;
+				else if(color(currBoard->board[i][j] == color(currBoard->board[i + 1][j - 1])))
+					whiteScore += adjacentAllyVal;			
+			}
+		}
+	}
+					
+	else if(i - 1 > 0)
+	{
+		if(j + 1 < 8)
+		{
+			if(piece(currBoard->board[i - 1][j + 1]) || king(currBoard->board[i - 1][j + 1]))
+			{
+				if(color(currBoard->board[i][j] == color(currBoard->board[i - 1][j + 1]) && currBoard->board[i][j] == 1))
+					redScore += adjacentAllyVal;
+				else if(color(currBoard->board[i][j] == color(currBoard->board[i - 1][j + 1])))
+					whiteScore += adjacentAllyVal;			
+			}	
+		}
+		
+		else if(j - 1 > 0)
+		{
+			if(piece(currBoard->board[i - 1][j - 1]) || king(currBoard->board[i - 1][j - 1]))
+			{
+				if(color(currBoard->board[i][j] == color(currBoard->board[i - 1][j - 1]) && currBoard->board[i][j] == 1))
+					redScore += adjacentAllyVal;
+				else if(color(currBoard->board[i][j] == color(currBoard->board[i - 1][j - 1])))
+					whiteScore += adjacentAllyVal;			
+			}					
+		}
+	}
+
+	if(j + 2 < 8)
+	{
+		if(piece(currBoard->board[i][j + 2]) || king(currBoard->board[i][j + 2]))
+		{
+			if(color(currBoard->board[i][j]) == 1)
+			{
+				if(color(currBoard->board[i][j + 2]) == 1)
+				{/*do nothing*/}
+				else
+					redScore += capturableEnemyVal;
+			}
+			else if(king(currBoard->board[i][j]))
+			{
+				if(color(currBoard->board[i][j] == 1))
+				{
+					whiteScore += capturableEnemyVal;
+				}
+				else
+				{/*do nothing*/}
+			}
+		}
+	}
+					
+	else if(i - 2 > 0)
+	{
+		if(piece(currBoard->board[i - 2][j]) || king(currBoard->board[i - 2][j]))
+		{
+			if(color(currBoard->board[i][j]) == 1 )
+			{
+			 	if(king(currBoard->board[i][j]))
+				{
+					if(color(currBoard->board[i - 2][j] == 1))
+					{/*do nothing*/}
+					else
+					{
+						redScore += capturableEnemyVal;
+					}
+				
+				}
+			}
+			else 
+			{
+				if(color(currBoard->board[i - 2][j] == 1))
+				{
+					whiteScore += capturableEnemyVal;
+				}
+				else
+				{/*do nothing*/}
+			}
+		}
+	}
+
+	if(j + 2 < 8)
+	{
+		if(piece(currBoard->board[i][j + 2]) || king(currBoard->board[i][j + 2]))
+		{	
+			if(king(currBoard->board[i][j]))
+			{
+				if(color(currBoard->board[i][j]) == 1)
+				{
+					if(color(currBoard->board[i][j + 2]) == 1)
+					{/*do nothing*/}
+					else
+					{	
+						redScore += capturableEnemyVal;
+					}
+				}
+				else if(color(currBoard->board[i][j + 2]) == 1)
+				{
+					whiteScore += capturableEnemyVal;
+				}
+				else
+				{/*do nothing*/}
+			}
+		}
+	}
+					
+	else if(j - 2 > 0)
+	{
+		if(piece(currBoard->board[i][j - 2]) || king(currBoard->board[i][j - 2]))
+		{	
+			if(king(currBoard->board[i][j]))
+			{
+				if(color(currBoard->board[i][j]) == 1)
+				{
+					if(color(currBoard->board[i][j - 2]) == 1)
+					{/*do nothing*/}
+					else
+					{	
+						redScore += capturableEnemyVal;
+					}
+				}
+				else if(color(currBoard->board[i][j - 2]) == 1)
+				{
+					whiteScore += capturableEnemyVal;
+				}
+				else
+				{/*do nothing*/}
+			}
+		}
+	}
 }
 
 double minVal(char currBoard[8][8], double alpha, double beta, int depth)

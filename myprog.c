@@ -51,7 +51,7 @@ int LowOnTime(void)
 
     current = times(&bff);
     total = (float) ((float)current-(float)start)/CLK_TCK;
-    if(total >= (SecPerMove-1.1)) return 1; else return 0;
+    if(total >= (SecPerMove-1)) return 1; else return 0;
 }
 
 /* Copy a square state */
@@ -330,7 +330,7 @@ void FindBestMove(int player)
 	
 	if(turnCounter != 0)
 	{
-		int depth = ((MaxDepth == -1) ? 10 : MaxDepth);
+		int depth = ((MaxDepth == -1) ? 9 : MaxDepth);
 		for(i = 0; i < state.numLegalMoves; i++)
 		{
 			double rval;
